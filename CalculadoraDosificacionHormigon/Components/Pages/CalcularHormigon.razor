@@ -96,7 +96,7 @@
     public double VolumenTotal => VaCemento + VaAgua + VaArena + VaGrava + VaAire;
 
     public double RelacionAguaCemento => Cemento > 0 ? Agua / Cemento : 0;
-    public double ResistenciaEstimada => RelacionAguaCemento > 0 ? 650 / Math.Pow(1.5, (RelacionAguaCemento * 10)) : 0;
+    public double ResistenciaEstimada => RelacionAguaCemento > 0 ? 1375 / Math.Pow(35, RelacionAguaCemento) : 0;
 
     public bool EsVolumenOptimo => Math.Round(VolumenTotal, 2) >= 0.98 && Math.Round(VolumenTotal, 2) <= 1.02;
 
