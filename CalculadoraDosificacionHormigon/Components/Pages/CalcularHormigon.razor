@@ -1,0 +1,115 @@
+﻿@page "/calculadora-hormigon"
+@rendermode InteractiveServer
+
+<h3>Dosificación por Volúmenes Absolutos</h3>
+<p class="text-muted">Ingresa las cantidades para analizar el rendimiento fisico de la mezcla</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Materiales</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Cemento (kg)</label>
+                    <input type="number" class="form-control" @bind="Cemento" @bind:event="oninput" min="0" step="5" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Agua (Litros)</label>
+                    <input type="number" class="form-control" @bind="Agua" @bind:event="oninput" min="0" step="5" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Arena (m³ suelto)</label>
+                    <input type="number" class="form-control" @bind="Arena" @bind:event="oninput" min="0" step="0.01" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Grava (m³ suelto)</label>
+                    <input type="number" class="form-control" @bind="Grava" @bind:event="oninput" min="0" step="0.01" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Analisis del Volumen</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Componente</th>
+                            <th class="text-end">Volumen Absoluto (m³)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Cemento</td><td class="text-end">@Math.Round(VaCemento, 4)</td></tr>
+                        <tr><td>Agua</td><td class="text-end">@Math.Round(VaAgua, 4)</td></tr>
+                        <tr><td>Arena</td><td class="text-end">@Math.Round(VaArena, 4)</td></tr>
+                        <tr><td>Grava</td><td class="text-end">@Math.Round(VaGrava, 4)</td></tr>
+                        <tr><td class="text-muted">Aire atrapado (2%)</td><td class="text-end text-muted">@Math.Round(VaAire, 4)</td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="@ClaseVolumenTotal border-top-2">
+                            <td class="fw-bold">VOLUMEN TOTAL</td>
+                            <td class="text-end fw-bold">@Math.Round(VolumenTotal, 4) m³</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="alert @ClaseAlertaVolumen py-2 mt-2">
+                    <strong>@MensajeVolumen</strong>
+                </div>
+
+                <hr />
+
+                <h6 class="text-secondary text-uppercase mb-3">Parámetros Estructurales</h6>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Relación a/c:</span>
+                    <span class="fs-5 fw-bold">@Math.Round(RelacionAguaCemento, 2)</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Resistencia Estimada:</span>
+                    <span class="fs-4 fw-bold text-primary">@Math.Round(ResistenciaEstimada, 0) kg/cm²</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public double Cemento { get; set; } = 320;
+    public double Agua { get; set; } = 170;
+    public double Arena { get; set; } = 0.52;
+    public double Grava { get; set; } = 0.90;
+
+    public double VaCemento => Cemento > 0 ? Cemento / 3150.0 : 0;
+
+    public double VaAgua => Agua > 0 ? Agua / 1000.0 : 0;
+
+    public double VaArena => Arena * 0.65;
+    public double VaGrava => Grava * 0.60;
+    public double VaAire => 0.02;
+
+    public double VolumenTotal => VaCemento + VaAgua + VaArena + VaGrava + VaAire;
+
+    public double RelacionAguaCemento => Cemento > 0 ? Agua / Cemento : 0;
+    public double ResistenciaEstimada => RelacionAguaCemento > 0 ? 650 / Math.Pow(1.5, (RelacionAguaCemento * 10)) : 0;
+
+    public bool EsVolumenOptimo => Math.Round(VolumenTotal, 2) >= 0.98 && Math.Round(VolumenTotal, 2) <= 1.02;
+
+    public string ClaseVolumenTotal => EsVolumenOptimo ? "table-success" : "table-danger text-danger";
+    public string ClaseAlertaVolumen => EsVolumenOptimo ? "alert-success" : "alert-danger";
+
+    public string MensajeVolumen
+    {
+        get
+        {
+            if (Math.Round(VolumenTotal, 2) > 1.02) return "Sobrecosto: La mezcla excede 1 m³. Reduce la arena o grava.";
+            if (Math.Round(VolumenTotal, 2) < 0.98) return "Faltante: La mezcla no alcanza 1 m³. Aumenta la arena o grava.";
+            return "Volumen óptimo. La dosificación rinde exactamente 1 m³.";
+        }
+    }
+}
