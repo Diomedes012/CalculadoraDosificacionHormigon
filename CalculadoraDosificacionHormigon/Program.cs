@@ -1,4 +1,7 @@
 using CalculadoraDosificacionHormigon.Components;
+using Microsoft.EntityFrameworkCore;
+using CalculadoraDosificacionHormigon.Data;
+using CalculadoraDosificacionHormigon.Services;
 
 namespace CalculadoraDosificacionHormigon
 {
@@ -6,7 +9,14 @@ namespace CalculadoraDosificacionHormigon
     {
         public static void Main(string[] args)
         {
+
             var builder = WebApplication.CreateBuilder(args);
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("No se encontró la cadena de conexión.");
+            builder.Services.AddDbContextFactory<Contexto>(options =>
+            options.UseSqlite(connectionString));
+
+            builder.Services.AddScoped<CalculoHormigonService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
