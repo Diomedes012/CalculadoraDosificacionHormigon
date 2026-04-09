@@ -1,0 +1,106 @@
+﻿@page "/historial-mezclas"
+@rendermode InteractiveServer
+@inject CalculoHormigonService CalculoService
+@inject NavigationManager NavManager
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-0">Historial de Dosificaciones</h3>
+            <p class="text-muted">Registros guardados en la base de datos local</p>
+        </div>
+        <button class="btn btn-primary" @onclick='() => NavManager.NavigateTo("/calculadora-hormigon")'>
+            <i class="bi bi-plus-circle"></i> Nuevo Cálculo
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (historial == null)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            }
+            else if (!historial.Any())
+            {
+                <div class="alert alert-info mb-0">
+                    No se han encontrado cálculos guardados.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Materiales (C/A/Ar/Gr)</th>
+                                <th class="text-center">Volumen</th>
+                                <th class="text-center">a/c</th>
+                                <th class="text-center">Resistencia</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in historial)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@item.FechaCalculo.ToString("dd/MM/yyyy")</div>
+                                        <div class="small text-muted">@item.FechaCalculo.ToString("HH:mm")</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">C: @item.Cemento</span>
+                                        <span class="badge bg-info text-dark">Ag: @item.Agua</span>
+                                        <span class="badge bg-warning text-dark">Ar: @item.Arena</span>
+                                        <span class="badge bg-secondary">Gr: @item.Grava</span>
+                                    </td>
+                                    <td class="text-center fw-bold text-success">
+                                        @Math.Round(item.VolumenTotal, 3) m³
+                                    </td>
+                                    <td class="text-center">
+                                        @Math.Round(item.RelacionAguaCemento, 2)
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold text-primary">@Math.Round(item.ResistenciaEstimada, 0)</span>
+                                        <span class="small">kg/cm²</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => Eliminar(item.CalculoId)">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<CalculoHormigon>? historial;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarHistorial();
+    }
+
+    private async Task CargarHistorial()
+    {
+        historial = await CalculoService.Listar(c => !c.Eliminado);
+    }
+
+    private async Task Eliminar(int id)
+    {
+        if (await CalculoService.Eliminar(id))
+        {
+            await CargarHistorial();
+        }
+    }
+}

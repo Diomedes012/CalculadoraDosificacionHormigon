@@ -1,4 +1,6 @@
 ﻿@page "/calculadora-hormigon"
+@inject CalculoHormigonService CalculoService
+@inject NavigationManager NavManager
 @rendermode InteractiveServer
 
 <h3>Dosificación por Volúmenes Absolutos</h3>
@@ -74,6 +76,15 @@
                     <span>Resistencia Estimada:</span>
                     <span class="fs-4 fw-bold text-primary">@Math.Round(ResistenciaEstimada, 0) kg/cm²</span>
                 </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-success" @onclick="GuardarMezcla" disabled="@(!EsVolumenOptimo)">
+                        Guardar Este Diseño
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick='() => NavManager.NavigateTo("/historial-mezclas")'>
+                        Ver Historial
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -110,6 +121,28 @@
             if (Math.Round(VolumenTotal, 2) > 1.02) return "Sobrecosto: La mezcla excede 1 m³. Reduce la arena o grava.";
             if (Math.Round(VolumenTotal, 2) < 0.98) return "Faltante: La mezcla no alcanza 1 m³. Aumenta la arena o grava.";
             return "Volumen óptimo. La dosificación rinde exactamente 1 m³.";
+        }
+    }
+
+    private async Task GuardarMezcla()
+    {
+        var nuevoCalculo = new CalculoHormigon
+        {
+            Cemento = Cemento,
+            Agua = Agua,
+            Arena = Arena,
+            Grava = Grava,
+            VolumenTotal = VolumenTotal,
+            RelacionAguaCemento = RelacionAguaCemento,
+            ResistenciaEstimada = ResistenciaEstimada,
+            FechaCalculo = DateTime.Now
+        };
+
+        var exito = await CalculoService.Guardar(nuevoCalculo);
+
+        if (exito)
+        {
+            NavManager.NavigateTo("/historial-mezclas");
         }
     }
 }
